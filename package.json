@@ -23,15 +23,15 @@
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-preset-env": "^1.6.1",
     "body-parser": "^1.18.2",
-    "buildnode": "1.0.0",
+    "buildnode": "^1.0.0",
     "child-process-promise": "^2.2.1",
     "es6-promisify": "^6.0.0",
     "express": "^4.15.2",
     "fs-extra": "^7.0.0",
     "moment": "^2.22.2",
-    "octonode": "0.9.4",
+    "octonode": "^0.9.4",
     "request-promise": "^4.2.2",
-    "silk-log": "1.9.1"
+    "silk-log": "^1.14.5"
   },
   "devDependencies": {
     "babel-eslint": "^9.0.0",
