@@ -120,10 +120,16 @@ async function triggerPullRequestCI(repoName, prNumber, commit) {
   const pipelineName = path.basename(repoName).replace(/\./g, '-');
   log.info('got pipelineName:', pipelineName);
 
-  const pipeline = await buildkiteOrg.getPipelineAsync(pipelineName);
+  let pipeline;
+  try {
+    pipeline = await buildkiteOrg.getPipelineAsync(pipelineName);
+  } catch (e) {
+    log.info('Error getting pipeline', e);
+  }
 
   let description = `${pipelineName} CI pipeline not present`;
   if (pipeline) {
+    log.info('Creating build for pipeline');
     pipeline.createBuildAsync = promisify(pipeline.createBuild);
 
     const newBuild = await pipeline.createBuildAsync({
