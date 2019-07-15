@@ -129,17 +129,19 @@ async function triggerPullRequestCI(repoName, prNumber, commit) {
 
   let description = `${pipelineName} CI pipeline not present`;
   if (pipeline) {
-    log.info('Creating build for pipeline');
     pipeline.createBuildAsync = promisify(pipeline.createBuild);
 
-    const newBuild = await pipeline.createBuildAsync({
+    const buildDetails = {
       branch,
       commit,
       message,
       meta_data: {
         affected_files,
       },
-    });
+    };
+    log.info('Creating build for pipeline', buildDetails);
+    const newBuild = await pipeline.createBuildAsync(buildDetails);
+
     description = 'Pull Request accepted for CI';
     log.info('createBuild result:', newBuild);
   }
