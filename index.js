@@ -76,6 +76,12 @@ const envconst = {
      public Buildkite pipelines
   */
   PUBLIC_PIPELINE_REPOS: '', // comma separated, no spaces
+
+  /*
+     Whether or not to automatically merge PRs after tests pass that have
+     the `automerge` label applied
+  */
+  AUTOMERGE_ENABLED: ''
 };
 
 for (const v in envconst) {
@@ -396,23 +402,25 @@ async function onGithubStatusUpdate(payload) {
     log.info(`Ignoring non-buildkite URL: ${target_url}`);
   }
 
-  autoMergePullRequestsPending = true;
-  if (autoMergePullRequestsBusy) {
-    log.info('autoMergePullRequests busy');
-    return;
-  }
-  autoMergePullRequestsBusy = true;
-  while (autoMergePullRequestsPending) {
-    autoMergePullRequestsPending = false;
-    try {
-      // Check if any PRs in this repo should be merged, as unfortunately the status
-      // API provides no link from commit status to the corresponding pull request
-      await autoMergePullRequests(name);
-    } catch (err) {
-      log.error('autoMergePullRequests failed with:', err);
+  if (envconst.AUTOMERGE_ENABLED !== '') {
+    autoMergePullRequestsPending = true;
+    if (autoMergePullRequestsBusy) {
+      log.info('autoMergePullRequests busy');
+      return;
     }
+    autoMergePullRequestsBusy = true;
+    while (autoMergePullRequestsPending) {
+      autoMergePullRequestsPending = false;
+      try {
+        // Check if any PRs in this repo should be merged, as unfortunately the status
+        // API provides no link from commit status to the corresponding pull request
+        await autoMergePullRequests(name);
+      } catch (err) {
+        log.error('autoMergePullRequests failed with:', err);
+      }
+    }
+    autoMergePullRequestsBusy = false;
   }
-  autoMergePullRequestsBusy = false;
 }
 
 async function onGithubPullRequestReview(payload) {
