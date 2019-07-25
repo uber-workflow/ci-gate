@@ -100,9 +100,12 @@ buildkiteClient.getOrganizationAsync = promisify(buildkiteClient.getOrganization
 let buildkiteOrg;
 
 
-async function triggerPullRequestCI(repoName, prNumber, commit) {
+async function triggerPullRequestCI(repoName, prNumber, prInfo) {
   const repo = githubClient.repo(repoName);
-  const branch = `pull/${prNumber}/head`;
+  const pr = repo.pr(prNumber);
+  const branch = prInfo.head.ref;
+  const message = prInfo.title;
+  const commit = prInfo.head.sha;
 
   if (await prHasLabel(repoName, prNumber, NOCI_LABEL)) {
     await repo.statusAsync(commit, {
@@ -113,11 +116,11 @@ async function triggerPullRequestCI(repoName, prNumber, commit) {
     return;
   }
 
-  const message = `Pull Request #${prNumber} - ${commit.substring(0, 8)}`;
-
   log.info(`Triggering pull request: ${repoName}:${branch} at ${commit}`);
 
-  const pr = repo.pr(prNumber);
+  const pull_request_id = prNumber;
+  const pull_request_repository = prInfo.head.repo.clone_url;
+  const pull_request_base_branch = prInfo.base.ref;
   const prFiles = await pr.filesAsync();
   const prFilenames = prFiles[0].map(f => f.filename);
   const affected_files = prFilenames.join(':');
@@ -141,6 +144,9 @@ async function triggerPullRequestCI(repoName, prNumber, commit) {
       branch,
       commit,
       message,
+      pull_request_base_branch,
+      pull_request_id,
+      pull_request_repository,
       meta_data: {
         affected_files,
       },
@@ -453,7 +459,7 @@ async function onGithubPullRequest(payload) {
     await prRemoveLabel(repoName, prNumber, CI_LABEL);
 
     if (await userInCiWhitelist(repoName, user)) {
-      await triggerPullRequestCI(repoName, prNumber, headSha);
+      await triggerPullRequestCI(repoName, prNumber, pull_request);
     } else {
       await repo.statusAsync(headSha, {
         'state': 'pending',
@@ -466,7 +472,7 @@ async function onGithubPullRequest(payload) {
   case 'labeled':
     if (!merged) {
       if (await prHasLabel(repoName, prNumber, CI_LABEL)) {
-        await triggerPullRequestCI(repoName, prNumber, headSha);
+        await triggerPullRequestCI(repoName, prNumber, pull_request);
       }
       await autoMergePullRequest(repoName, prNumber);
     }
