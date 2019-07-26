@@ -469,14 +469,18 @@ async function onGithubPullRequest(payload) {
     }
     break;
   }
+  case 'edited':
   case 'labeled':
+  {
+    const [hasLabel, inWhitelist] = await Promise.all([prHasLabel(repoName, prNumber, CI_LABEL), userInCiWhitelist(repoName, user)]);
     if (!merged) {
-      if (await prHasLabel(repoName, prNumber, CI_LABEL)) {
+      if (hasLabel || inWhitelist) {
         await triggerPullRequestCI(repoName, prNumber, pull_request);
       }
       await autoMergePullRequest(repoName, prNumber);
     }
     break;
+  }
   default:
     log.info('Ignored pull request action:', payload.action);
   }
