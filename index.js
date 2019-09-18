@@ -469,7 +469,6 @@ async function onGithubPullRequest(payload) {
     }
     break;
   }
-  case 'edited':
   case 'labeled':
   {
     const [hasLabel, inWhitelist] = await Promise.all([prHasLabel(repoName, prNumber, CI_LABEL), userInCiWhitelist(repoName, user)]);
